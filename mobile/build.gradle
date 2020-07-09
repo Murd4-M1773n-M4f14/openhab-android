@@ -44,8 +44,8 @@ android {
         applicationId "org.openhab.habdroid"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 295
-        versionName "2.13.6-beta"
+        versionCode 299
+        versionName "2.13.10-beta"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -164,7 +164,7 @@ dependencies {
     fossImplementation "org.osmdroid:osmdroid-android:6.1.6"
 
     // FCM
-    fullImplementation "com.google.firebase:firebase-messaging:20.2.1"
+    fullImplementation "com.google.firebase:firebase-messaging:20.2.3"
 
     // About screen
     implementation "com.github.daniel-stoneuk:material-about-library:2.4.2"

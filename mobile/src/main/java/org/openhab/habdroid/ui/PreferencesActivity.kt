@@ -13,7 +13,6 @@
 
 package org.openhab.habdroid.ui
 
-import android.Manifest
 import android.app.Activity
 import android.app.KeyguardManager
 import android.content.Context
@@ -55,11 +54,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.openhab.habdroid.R
+import org.openhab.habdroid.background.BackgroundTasksManager
+import org.openhab.habdroid.background.BroadcastEventListenerService
 import org.openhab.habdroid.background.tiles.AbstractTileService
 import org.openhab.habdroid.background.tiles.TileData
 import org.openhab.habdroid.background.tiles.getTileData
 import org.openhab.habdroid.background.tiles.putTileData
-import org.openhab.habdroid.background.BackgroundTasksManager
 import org.openhab.habdroid.core.CloudMessagingHelper
 import org.openhab.habdroid.core.connection.CloudConnection
 import org.openhab.habdroid.core.connection.ConnectionFactory
@@ -709,6 +709,7 @@ class PreferencesActivity : AbstractBaseActivity() {
             addPreferencesFromResource(R.xml.preferences_device_information)
 
             val prefixHint = getPreference(PrefKeys.DEV_ID_PREFIX_BG_TASKS)
+            val foregroundServicePref = getPreference(PrefKeys.SEND_DEVICE_INFO_FOREGROUND_SERVICE)
             phoneStatePref = getPreference(PrefKeys.SEND_PHONE_STATE) as ItemUpdatingPreference
             wifiSsidPref = getPreference(PrefKeys.SEND_WIFI_SSID) as ItemUpdatingPreference
 
@@ -738,6 +739,21 @@ class PreferencesActivity : AbstractBaseActivity() {
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 preferenceScreen.removePreferenceRecursively(PrefKeys.SEND_DND_MODE)
+                preferenceScreen.removePreferenceRecursively(PrefKeys.SEND_DEVICE_INFO_FOREGROUND_SERVICE)
+            } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                foregroundServicePref.setSummary(R.string.send_device_info_foreground_service_summary_pre_o)
+            }
+
+            foregroundServicePref.setOnPreferenceChangeListener { preference, newValue ->
+                BroadcastEventListenerService.startOrStopService(preference.context, newValue as Boolean)
+                true
+            }
+
+            BackgroundTasksManager.KNOWN_PERIODIC_KEYS.forEach { key ->
+                findPreference<Preference>(key)?.setOnPreferenceChangeListener { preference, _ ->
+                    BroadcastEventListenerService.startOrStopService(preference.context)
+                    true
+                }
             }
 
             val prefix = prefs.getPrefixForBgTasks()
@@ -985,6 +1001,7 @@ class PreferencesActivity : AbstractBaseActivity() {
                             "garage", "garagedoor", "garage_detached", "garage_detached_selected" ->
                                 R.string.tile_icon_garage_value
                             "switch" -> R.string.tile_icon_switch_value
+                            "sofa" -> R.string.tile_icon_sofa_value
                             else -> R.string.tile_icon_openhab_value
                         }
                     }
